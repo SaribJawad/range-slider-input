@@ -13,8 +13,20 @@ const sheet = new CSSStyleSheet()
 const theme = get_theme()
 sheet.replaceSync(theme)
 
-function input_integer (opts) {
+let id = 0
+
+function input_integer (opts, protocol) {
   const { min = 0, max = 1000 } = opts
+  const name = `input-integer-${id++}`
+
+  const notify = protocol({ from: name }, listen)
+  function listen (message) {
+    const { type, data } = message
+    if (type === 'update') {
+      input.value = data
+    }
+  }
+
   const el = document.createElement('div')
   const shadow = el.attachShadow({ mode: 'closed' })
 
@@ -29,71 +41,85 @@ function input_integer (opts) {
   shadow.append(input)
   shadow.adoptedStyleSheets = [sheet]
   return el
+
+  // handlers
+  function handle_onkeyup (e, input, min, max) {
+    const val = Number(e.target.value)
+    const val_len = val.toString().length
+    const min_len = min.toString().length
+
+    if (val > max) return input.value = max
+    else if (val_len === min_len && val < min) return input.value = min
+
+    notify({ from: name, type: 'update', data: val })
+  }
+
+  function handle_onmouseleave_and_blur (e, input, min, max) {
+    const val = Number(e.target.value)
+    if (val < min) input.value = ''
+  }
 }
 
 function get_theme () {
   return `
-		:host {
-  		--b: 0, 0%;
-  		--color-white: var(--b), 100%;
-  		--color-black: var(--b), 0%;
-  		--color-grey: var(--b), 85%;
-  		--bg-color: var(--color-grey);
-  		--shadow-xy: 0 0;
-			--shadow-blur: 8px;
-			--shadow-color: var(--color-white);
-			--shadow-opacity: 1;
-			--shadow-opacity-focus: 0.65;
-		}
-		input {
-			text-align: left;
-			align-items: center;
-			font-size: 1.4rem;
-			font-weight: 200;
-			color: hsla(var(--color-black), 1);
-			background-color: hsla(var(--bg-color), 1);
-			padding: 8px 12px;
-			box-shadow: var(--shadow-xy) var(--shadow-blur) hsla(var(--shadow-color), var(--shadow-opacity));
-			transition: font-size 0.3s, color 0.3s, background-color 0.3s, box-shadow 0.3s ease-in-out;
-			outline: none;
-			border: 1px solid hsla(var(--bg-color), 1);
-			border-radius: 8px;
-
-			-moz-appearance: textfield;
-		}
-		input:focus {
-			--shadow-color: var(--color-black);
-			--shadow-opacity: var(--shadow-opacity-focus);
-			--shadow-xy: 4px 4px;
-			box-shadow: var(--shadow-xy) var(--shadow-blur) hsla(var(--shadow-color), var(--shadow-opacity));
-		}
-		input::-webkit-outer-spin-button,
-		input::-webkit-inner-spin-button {
-			-webkit-appearance: none;
-		}
-    `
-}
-
-function handle_onkeyup (e, input, min, max) {
-  const val = Number(e.target.value)
-
-  const val_len = val.toString().length
-  const min_len = min.toString().length
-
-  if (val > max) input.value = ''
-  else if (val_len === min_len && val < min) input.value = ''
-}
-
-function handle_onmouseleave_and_blur (e, input, min, max) {
-  const val = Number(e.target.value)
-  if (val < min) input.value = ''
+    :host {
+      --b: 0, 0%;
+      --color-white: var(--b), 100%;
+      --color-black: var(--b), 0%;
+      --color-grey: var(--b), 85%;
+      --bg-color: var(--color-grey);
+      --shadow-xy: 0 0;
+      --shadow-blur: 8px;
+      --shadow-color: var(--color-white);
+      --shadow-opacity: 1;
+      --shadow-opacity-focus: 0.65;
+    }
+    input {
+      text-align: left;
+      align-items: center;
+      font-size: 1.4rem;
+      font-weight: 200;
+      color: hsla(var(--color-black), 1);
+      background-color: hsla(var(--bg-color), 1);
+      padding: 8px 12px;
+      box-shadow: var(--shadow-xy) var(--shadow-blur) hsla(var(--shadow-color), var(--shadow-opacity));
+      transition: font-size 0.3s, color 0.3s, background-color 0.3s, box-shadow 0.3s ease-in-out;
+      outline: none;
+      border: 1px solid hsla(var(--bg-color), 1);
+      border-radius: 8px;
+      -moz-appearance: textfield;
+    }
+    input:focus {
+      --shadow-color: var(--color-black);
+      --shadow-opacity: var(--shadow-opacity-focus);
+      --shadow-xy: 4px 4px;
+      box-shadow: var(--shadow-xy) var(--shadow-blur) hsla(var(--shadow-color), var(--shadow-opacity));
+    }
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+     -webkit-appearance: none;
+    }
+`
 }
 
 },{}],3:[function(require,module,exports){
 module.exports = range_slider
 
-function range_slider (opts) {
+let id = 0
+
+function range_slider (opts, protocol) {
   const { min = 0, max = 1000 } = opts
+  const name = `range-${id++}`
+
+  const notify = protocol({ from: name }, listen)
+  function listen (message) {
+    const { type, data } = message
+    if (type === 'update') {
+      input.value = data
+      fill.style.width = `${(data / max) * 100}%`
+      input.focus()
+    }
+  }
 
   const el = document.createElement('div')
   el.classList.add('container')
@@ -128,8 +154,8 @@ function range_slider (opts) {
   // handler
   function handle_input (e) {
     const value = Number(e.target.value)
-
     fill.style.width = `${(value / max) * 100}%`
+    notify({ from: name, type: 'update', data: value })
   }
 }
 
@@ -232,23 +258,56 @@ const integer = require('@saribj/input-integer-ui-demo')
 module.exports = range_slider_integer
 
 function range_slider_integer (opts) {
+  const state = {
+    // 'input-0' : { value : 6 },
+    // 'range-0' : { value : 3 }
+  }
+
   const el = document.createElement('div')
   const shadow = el.attachShadow({ mode: 'closed' })
 
-  const range_slider = range(opts, listen)
-  const input_integer = integer(opts, listen)
+  const rsi = document.createElement('div')
+  rsi.classList.add('rsi')
 
-  const output = document.createElement('div')
-  output.innerText = 0
+  const range_slider = range(opts, protocol)
+  const input_integer = integer(opts, protocol)
 
-  shadow.append(range_slider, input_integer, output)
+  rsi.append(range_slider, input_integer)
+
+  const style = document.createElement('style')
+  style.textContent = get_theme()
+
+  shadow.append(rsi, style)
 
   return el
 
+  function protocol (message, notify) {
+    const { from } = message
+    state[from] = { value: 0, notify }
+    return listen
+  }
+
   function listen (message) {
-    const { type, body } = message
-    if (type === 'update') output.innerText = body
-    console.log(message)
+    const { from, type, data } = message
+    state[from].value = data
+
+    if (type === 'update') {
+      let notify
+      if (from === 'range-0') notify = state['input-integer-0'].notify
+      else if (from === 'input-integer-0') notify = state['range-0'].notify
+      notify({ type, data })
+    }
+  }
+
+  function get_theme () {
+    return `
+    .rsi {
+      display: grid;
+      grid-template-columns: 8fr 1fr;
+      align-items: center;
+      justify-items: center;
+    } 
+    `
   }
 }
 

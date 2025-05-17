@@ -43,7 +43,7 @@
     "standardx": "^7.0.0"
   },
   "dependencies": {
-    "@saribj/input-integer-ui-demo": "^0.0.2",
-    "@saribj/range-slider-demo": "^0.0.2"
+    "@saribj/input-integer-ui-demo": "^0.0.3",
+    "@saribj/range-slider-demo": "^0.0.3"
   }
 }
